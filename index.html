@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stanville Lodge Hotel Bus</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
+
+  :root {
+    --tg-blue: #2AABEE;
+    --bg: #f0f2f5;
+    --card: #ffffff;
+    --text: #1a1f2e;
+    --muted: #8a8f9e;
+    --border: rgba(0,0,0,0.08);
+    --green: #1D9E75;
+    --green-bg: #E1F5EE;
+    --green-text: #0F6E56;
+    --blue-bg: #E6F1FB;
+    --blue-text: #0C447C;
+    --amber-bg: #fdf6ee;
+    --amber-border: #EF9F27;
+    --amber-text: #633806;
+    --red: #E24B4A;
+    --red-bg: #FCEBEB;
+    --red-text: #A32D2D;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Manrope', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+    overflow-x: hidden;
+  }
+
+  .header {
+    background: var(--tg-blue);
+    padding: 20px 20px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -20px; left: 0; right: 0;
+    height: 40px;
+    background: var(--bg);
+    border-radius: 24px 24px 0 0;
+  }
+  .header-top { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .header-icon {
+    width: 48px; height: 48px; border-radius: 14px;
+    background: rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .header-title { color: #fff; font-size: 20px; font-weight: 700; }
+  .header-sub { color: rgba(255,255,255,0.8); font-size: 13px; margin-top: 2px; }
+
+  .trips-scroll-wrap { overflow-x: auto; padding-bottom: 2px; }
+  .trips-scroll-wrap::-webkit-scrollbar { display: none; }
+  .trip-pills { display: flex; gap: 8px; width: max-content; }
+  .trip-pill {
+    background: rgba(255,255,255,0.15);
+    border: 1.5px solid transparent;
+    border-radius: 12px; padding: 10px 14px;
+    cursor: pointer; transition: all .2s; text-align: center; min-width: 90px;
+  }
+  .trip-pill.active { background: #fff; border-color: #fff; }
+  .trip-pill-day { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.9); }
+  .trip-pill.active .trip-pill-day { color: var(--tg-blue); font-weight: 700; }
+  .trip-pill-date { font-size: 11px; color: rgba(0,0,0,0.65); margin-top: 2px; font-weight: 700; }
+  .trip-pill.active .trip-pill-date { color: #1a1f2e; font-weight: 700; }
+
+  .content { padding: 12px 16px 100px; display: flex; flex-direction: column; gap: 12px; }
+
+  .card {
+    background: var(--card); border-radius: 16px;
+    border: 0.5px solid var(--border); overflow: hidden;
+    animation: fadeUp .3s ease both;
+  }
+  .card:nth-child(2) { animation-delay: .06s; }
+  .card:nth-child(3) { animation-delay: .12s; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-header {
+    padding: 12px 16px; display: flex; align-items: center; gap: 8px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .card-header-icon {
+    width: 28px; height: 28px; border-radius: 8px; background: var(--blue-bg);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card-header-title { font-size: 14px; font-weight: 600; color: var(--blue-text); }
+  .card-body { padding: 14px 16px; }
+
+  .legend { display: flex; gap: 14px; margin-bottom: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+  .legend-dot { width: 14px; height: 14px; border-radius: 4px; border: 0.5px solid; }
+  .legend-dot.single { background: var(--bg); border-color: rgba(0,0,0,.15); }
+  .legend-dot.paired { background: var(--amber-bg); border-color: var(--amber-border); }
+
+  .room-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .floor-label {
+    grid-column: 1 / -1; font-size: 11px; font-weight: 700; color: var(--muted);
+    letter-spacing: .07em; text-transform: uppercase;
+    padding: 10px 0 2px; border-top: 0.5px solid var(--border); margin-top: 2px;
+  }
+  .floor-label:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+
+  .room-btn {
+    height: 46px; border-radius: 10px; border: 0.5px solid var(--border);
+    background: var(--bg); font-size: 13px; font-weight: 700; color: var(--text);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 1px; transition: all .15s; position: relative; padding: 0 2px;
+  }
+  .room-btn:hover { background: var(--blue-bg); border-color: var(--tg-blue); }
+  .room-btn.paired {
+    grid-column: span 2; background: var(--amber-bg);
+    border-color: var(--amber-border); color: var(--amber-text);
+  }
+  .room-btn.paired .sub { font-size: 9px; opacity: .7; font-weight: 400; color: #BA7517; }
+  .room-btn.paired:hover { background: #faeeda; }
+  .room-btn.selected {
+    background: var(--tg-blue) !important; border-color: var(--tg-blue) !important;
+    color: #fff !important; font-weight: 700; transform: scale(1.06);
+  }
+  .room-btn.selected .sub { color: rgba(255,255,255,.75) !important; }
+  .room-btn.taken {
+    background: var(--green-bg) !important; border-color: var(--green) !important;
+    color: var(--green-text) !important;
+  }
+  .room-btn.taken .sub { color: var(--green-text) !important; }
+  .room-btn.taken::after {
+    content: ''; position: absolute; top: -4px; right: -4px;
+    width: 13px; height: 13px; background: var(--green);
+    border-radius: 50%;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6l2.5 2.5 4.5-4.5' stroke='white' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-size: 10px; background-repeat: no-repeat; background-position: center;
+  }
+
+  .pax-wrap {
+    display: flex; align-items: center; background: var(--bg);
+    border-radius: 12px; overflow: hidden; border: 0.5px solid var(--border);
+  }
+  .pax-btn {
+    width: 52px; height: 52px; border: none; background: transparent;
+    color: var(--tg-blue); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: background .15s;
+  }
+  .pax-btn:hover { background: var(--blue-bg); }
+  .pax-btn:disabled { opacity: 0.3; cursor: default; }
+  .pax-val { flex: 1; text-align: center; font-size: 22px; font-weight: 700; }
+  .pax-label { font-size: 11px; color: var(--muted); text-align: center; margin-top: 6px; }
+
+  .submit-btn {
+    width: 100%; height: 52px; border-radius: 14px; border: none;
+    background: var(--tg-blue); color: #fff; font-size: 16px; font-weight: 600;
+    font-family: 'Manrope', sans-serif; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all .15s; margin-top: 4px;
+  }
+  .submit-btn:hover { background: #229ed9; }
+  .submit-btn:active { transform: scale(0.98); }
+  .submit-btn:disabled { background: rgba(0,0,0,0.1); color: var(--muted); cursor: default; transform: none; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: 90px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    color: #fff; padding: 12px 20px; border-radius: 14px;
+    font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px;
+    opacity: 0; transition: all .3s; pointer-events: none; z-index: 200;
+    max-width: 90%;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.green { background: var(--green); }
+  .toast.red   { background: var(--red); }
+
+  /* ── Status list ── */
+  .status-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 16px; border-bottom: 0.5px solid var(--border); font-size: 14px;
+  }
+  .status-row:last-child { border-bottom: none; }
+  .status-room { color: var(--text); font-weight: 500; }
+  .status-right { display: flex; align-items: center; gap: 8px; }
+  .status-pax {
+    background: var(--blue-bg); color: var(--blue-text);
+    font-weight: 600; font-size: 13px; padding: 3px 10px; border-radius: 20px;
+  }
+  .cancel-btn {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--red-bg); border: 0.5px solid rgba(226,75,74,0.25);
+    color: var(--red); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s; flex-shrink: 0;
+  }
+  .cancel-btn:hover { background: var(--red); color: #fff; }
+  .status-empty { padding: 24px 16px; text-align: center; color: var(--muted); font-size: 14px; }
+  .total-bar {
+    background: var(--green-bg); padding: 14px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-top: 0.5px solid rgba(29,158,117,0.2);
+  }
+  .total-label { font-size: 14px; font-weight: 600; color: var(--green-text); }
+  .total-val { font-size: 20px; font-weight: 700; color: var(--green); }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    display: none;
+    min-height: 400px;
+    background: rgba(10,15,30,0.55);
+    align-items: flex-end;
+    justify-content: center;
+    position: fixed; inset: 0; z-index: 300;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card);
+    border-radius: 24px 24px 0 0;
+    padding: 24px 20px 36px;
+    width: 100%; max-width: 430px;
+    animation: slideUp .25s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+  .modal-handle {
+    width: 36px; height: 4px; border-radius: 2px;
+    background: var(--border); margin: 0 auto 20px;
+  }
+  .modal-title { font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 6px; }
+  .modal-sub { font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 20px; line-height: 1.5; }
+  .modal-input-wrap { position: relative; margin-bottom: 12px; }
+  .modal-input {
+    width: 100%; height: 52px; border-radius: 12px;
+    border: 1.5px solid var(--border); background: var(--bg);
+    font-size: 18px; font-weight: 700; font-family: 'Manrope', sans-serif;
+    text-align: center; color: var(--text); outline: none; transition: border .15s;
+  }
+  .modal-input:focus { border-color: var(--tg-blue); }
+  .modal-input.error { border-color: var(--red); animation: shake .3s ease; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25%      { transform: translateX(-6px); }
+    75%      { transform: translateX(6px); }
+  }
+  .modal-error { font-size: 12px; color: var(--red); text-align: center; min-height: 18px; margin-bottom: 8px; }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-btn {
+    flex: 1; height: 50px; border-radius: 12px; border: none;
+    font-size: 15px; font-weight: 600; font-family: 'Manrope', sans-serif;
+    cursor: pointer; transition: all .15s;
+  }
+  .modal-btn.cancel-action { background: var(--bg); color: var(--muted); }
+  .modal-btn.cancel-action:hover { background: #e0e2e6; }
+  .modal-btn.confirm { background: var(--red); color: #fff; }
+  .modal-btn.confirm:hover { background: #c73f3e; }
+
+  /* ── Bottom nav ── */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 430px; background: #fff;
+    border-top: 0.5px solid var(--border); display: flex;
+    padding-bottom: env(safe-area-inset-bottom, 8px);
+  }
+  .nav-tab {
+    flex: 1; padding: 10px 8px 12px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    cursor: pointer; color: var(--muted); font-size: 11px; font-weight: 500; transition: color .15s;
+  }
+  .nav-tab.active { color: var(--tg-blue); }
+
+  .page { display: none; }
+  .page.active { display: flex; flex-direction: column; gap: 12px; }
+</style>
+</head>
+<body>
+
+<!-- SVG иконки (спрайт) -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="ico-bus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2" y="4" width="20" height="13" rx="3"/>
+    <path d="M2 9h20M8 4v5M16 4v5"/>
+    <circle cx="7" cy="19" r="2"/><circle cx="17" cy="19" r="2"/>
+    <path d="M5 17H2v-1M19 17h3v-1M7 19h10"/>
+  </symbol>
+  <symbol id="ico-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/>
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  </symbol>
+  <symbol id="ico-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 6h11M9 12h11M9 18h11"/>
+    <circle cx="4" cy="6" r="1.2" fill="currentColor" stroke="none"/>
+    <circle cx="4" cy="12" r="1.2" fill="currentColor" stroke="none"/>
+    <circle cx="4" cy="18" r="1.2" fill="currentColor" stroke="none"/>
+  </symbol>
+  <symbol id="ico-hotel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 21V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14"/>
+    <path d="M3 21h18M9 21v-6h6v6M9 7h2v2H9zM13 7h2v2h-2zM9 13h2v2H9zM13 13h2v2h-2z"/>
+  </symbol>
+  <symbol id="ico-people" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="9" cy="7" r="3"/><circle cx="17" cy="8" r="2.5"/>
+    <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/>
+    <path d="M19 20c0-2.2-1.3-4-3-5"/>
+  </symbol>
+  <symbol id="ico-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <line x1="5" y1="12" x2="19" y2="12"/>
+  </symbol>
+  <symbol id="ico-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+  </symbol>
+  <symbol id="ico-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </symbol>
+  <symbol id="ico-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+    <path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+  </symbol>
+  <symbol id="ico-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="11" width="18" height="11" rx="2"/>
+    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    <circle cx="12" cy="16" r="1.5" fill="currentColor" stroke="none"/>
+  </symbol>
+</svg>
+
+<div class="header">
+  <div class="header-top">
+    <div class="header-icon">
+      <svg width="28" height="28" style="color:#fff"><use href="#ico-bus"/></svg>
+    </div>
+    <div>
+      <div class="header-title">Stanville Lodge Hotel Bus</div>
+      <div class="header-sub">Запись на поездку в Wexford</div>
+    </div>
+  </div>
+  <div class="trips-scroll-wrap">
+    <div class="trip-pills" id="trip-pills"></div>
+  </div>
+</div>
+
+<div class="content">
+
+  <div id="page-register" class="page active">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-icon">
+          <svg width="16" height="16" style="color:#185FA5"><use href="#ico-hotel"/></svg>
+        </div>
+        <span class="card-header-title">Выберите вашу комнату</span>
+      </div>
+      <div class="card-body">
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot single"></div> Обычный</div>
+          <div class="legend-item"><div class="legend-dot paired"></div> Спаренный</div>
+        </div>
+        <div class="room-grid" id="room-grid"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-icon">
+          <svg width="16" height="16" style="color:#185FA5"><use href="#ico-people"/></svg>
+        </div>
+        <span class="card-header-title">Количество человек</span>
+      </div>
+      <div class="card-body">
+        <div class="pax-wrap">
+          <button class="pax-btn" id="pax-minus" onclick="changePax(-1)" disabled aria-label="Меньше">
+            <svg width="22" height="22"><use href="#ico-minus"/></svg>
+          </button>
+          <span class="pax-val" id="pax-val">1</span>
+          <button class="pax-btn" id="pax-plus" onclick="changePax(1)" aria-label="Больше">
+            <svg width="22" height="22"><use href="#ico-plus"/></svg>
+          </button>
+        </div>
+        <div class="pax-label">Включая вас</div>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="submit-btn" onclick="doRegister()" disabled>
+      <svg width="20" height="20"><use href="#ico-check"/></svg>
+      Записаться
+    </button>
+  </div>
+
+  <div id="page-status" class="page">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-icon">
+          <svg width="16" height="16" style="color:#185FA5"><use href="#ico-list"/></svg>
+        </div>
+        <span class="card-header-title" id="status-title">Список</span>
+      </div>
+      <div id="status-rows"></div>
+      <div class="total-bar">
+        <span class="total-label">Итого</span>
+        <span class="total-val" id="total-val">0 чел.</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="bottom-nav">
+  <div class="nav-tab active" id="tab-register" onclick="switchTab('register')">
+    <svg width="24" height="24"><use href="#ico-edit"/></svg>
+    Записаться
+  </div>
+  <div class="nav-tab" id="tab-status" onclick="switchTab('status')">
+    <svg width="24" height="24"><use href="#ico-list"/></svg>
+    Список
+  </div>
+</div>
+
+<!-- Модальное окно подтверждения отмены -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="text-align:center;margin-bottom:14px">
+      <div style="width:52px;height:52px;border-radius:50%;background:var(--red-bg);display:flex;align-items:center;justify-content:center;margin:0 auto 10px">
+        <svg width="24" height="24" style="color:var(--red)"><use href="#ico-lock"/></svg>
+      </div>
+    </div>
+    <div class="modal-title">Отмена записи</div>
+    <div class="modal-sub" id="modal-sub">Введите номер комнаты, запись которой хотите отменить</div>
+    <div class="modal-input-wrap">
+      <input class="modal-input" id="modal-input" type="text" inputmode="text"
+             autocomplete="off" oninput="clearError()">
+    </div>
+    <div class="modal-error" id="modal-error"></div>
+    <div class="modal-btns">
+      <button class="modal-btn cancel-action" onclick="closeModal()">Отмена</button>
+      <button class="modal-btn confirm" onclick="confirmCancel()">
+        Отменить запись
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  var MAX_PAX = 4;
+  var ROOMS = [
+    { type: 'floor', label: '1-й этаж' },
+    { type: 'single', n: '101' }, { type: 'single', n: '102' },
+    { type: 'single', n: '103' }, { type: 'single', n: '104' },
+    { type: 'single', n: '105' }, { type: 'single', n: '106' },
+    { type: 'single', n: '107' }, { type: 'single', n: '108' },
+    { type: 'single', n: '110' }, { type: 'single', n: '111' },
+    { type: 'single', n: '112' }, { type: 'single', n: '113' },
+    { type: 'paired', n: '114/115' },
+    { type: 'single', n: '116' },
+    { type: 'floor', label: '2-й этаж' },
+    { type: 'single', n: '201' },
+    { type: 'paired', n: '202/203' },
+    { type: 'single', n: '204' }, { type: 'single', n: '205' },
+    { type: 'single', n: '206' }, { type: 'single', n: '207' },
+    { type: 'single', n: '208' }, { type: 'single', n: '209' },
+    { type: 'single', n: '210' }, { type: 'single', n: '211' },
+    { type: 'single', n: '212' }, { type: 'single', n: '213' },
+    { type: 'paired', n: '214/215' },
+    { type: 'single', n: '216' }
+  ];
+
+  var MONTHS_RU = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+
+  /* ── Google Sheets backend ── */
+  var BACKEND_URL = 'https://script.google.com/macros/s/AKfycbzwzYQHHP-Jji_0EHDGd-H2s23UYeEJDpc0tEE5h6GUQXY5U-gKkk2ltTXqDeKkJ-Sk/exec';
+
+  function backendCall(params) {
+    var query = Object.keys(params)
+      .map(function(k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
+      .join('&');
+    return fetch(BACKEND_URL + '?' + query, { method: 'GET' })
+      .then(function(r) { return r.json(); });
+  }
+
+  function loadAllRegistrations() {
+    return backendCall({ action: 'list' })
+      .then(function(res) {
+        if (res && res.ok && res.data) {
+          /* Сливаем серверные данные с локальной структурой */
+          TRIPS.forEach(function(t) { regs[t.key] = res.data[t.key] || {}; });
+        }
+      })
+      .catch(function(err) {
+        console.error('Ошибка загрузки:', err);
+        showToast('Не удалось загрузить данные. Проверьте интернет.', 'red');
+      });
+  }
+
+
+  function generateTrips() {
+    var trips = [];
+    var today = new Date(); today.setHours(0,0,0,0);
+    var yearEnd = new Date(today.getFullYear(), 11, 31);
+    var d = new Date(today);
+    while (d <= yearEnd) {
+      var dow = d.getDay();
+      if (dow === 3 || dow === 6) {
+        var key = d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+        trips.push({
+          key: key,
+          dayName: dow === 3 ? 'Среда' : 'Суббота',
+          dateStr: d.getDate() + ' ' + MONTHS_RU[d.getMonth()]
+        });
+      }
+      d.setDate(d.getDate() + 1);
+    }
+    return trips;
+  }
+
+  var TRIPS = generateTrips();
+  var regs = {};
+  TRIPS.forEach(function(t) { regs[t.key] = {}; });
+
+  var currentTripKey = TRIPS.length ? TRIPS[0].key : null;
+  var selectedRoom = null;
+  var pax = 1;
+  var pendingCancelRoom = null;
+
+  /* ── Таблетки поездок ── */
+  function buildTripPills() {
+    var c = document.getElementById('trip-pills');
+    c.innerHTML = '';
+    TRIPS.forEach(function(trip, i) {
+      var pill = document.createElement('div');
+      pill.className = 'trip-pill' + (i === 0 ? ' active' : '');
+      pill.id = 'pill-' + trip.key;
+      pill.innerHTML = '<div class="trip-pill-day">' + trip.dayName + '</div>' +
+                       '<div class="trip-pill-date">' + trip.dateStr + '</div>';
+      pill.onclick = (function(t, el) { return function() { selectTrip(t.key, el); }; })(trip, pill);
+      c.appendChild(pill);
+    });
+  }
+
+  /* ── Сетка комнат ── */
+  function buildRooms() {
+    var g = document.getElementById('room-grid');
+    g.innerHTML = '';
+    var data = regs[currentTripKey] || {};
+    ROOMS.forEach(function(room) {
+      if (room.type === 'floor') {
+        var lbl = document.createElement('div');
+        lbl.className = 'floor-label';
+        lbl.textContent = room.label;
+        g.appendChild(lbl);
+        return;
+      }
+      var taken = data[room.n] !== undefined;
+      var d = document.createElement('div');
+      d.className = 'room-btn' + (room.type === 'paired' ? ' paired' : '') + (taken ? ' taken' : '');
+      d.dataset.n = room.n;
+      var numEl = document.createElement('span');
+      numEl.textContent = room.n;
+      d.appendChild(numEl);
+      if (room.type === 'paired') {
+        var sub = document.createElement('span');
+        sub.className = 'sub'; sub.textContent = 'спаренный';
+        d.appendChild(sub);
+      }
+      d.onclick = (function(n, el) { return function() { selectRoom(n, el); }; })(room.n, d);
+      g.appendChild(d);
+    });
+    selectedRoom = null; pax = 1;
+    document.getElementById('pax-val').textContent = '1';
+    document.getElementById('pax-minus').disabled = true;
+    document.getElementById('pax-plus').disabled = false;
+    updateSubmit();
+  }
+
+  function selectRoom(n, el) {
+    document.querySelectorAll('.room-btn').forEach(function(b) { b.classList.remove('selected'); });
+    el.classList.add('selected');
+    selectedRoom = n;
+    updateSubmit();
+  }
+
+  function changePax(delta) {
+    pax = Math.max(1, Math.min(MAX_PAX, pax + delta));
+    document.getElementById('pax-val').textContent = pax;
+    document.getElementById('pax-minus').disabled = pax <= 1;
+    document.getElementById('pax-plus').disabled = pax >= MAX_PAX;
+  }
+
+  function updateSubmit() {
+    document.getElementById('submit-btn').disabled = !selectedRoom;
+  }
+
+  function doRegister() {
+    if (!selectedRoom) return;
+    var room = selectedRoom;
+    var p    = pax;
+    var trip = TRIPS.find(function(t) { return t.key === currentTripKey; });
+
+    /* Сразу обновляем UI — оптимистично */
+    regs[currentTripKey][room] = p;
+    document.querySelectorAll('.room-btn').forEach(function(b) {
+      if (b.dataset.n === room) { b.classList.remove('selected'); b.classList.add('taken'); }
+    });
+    selectedRoom = null; pax = 1;
+    document.getElementById('pax-val').textContent = '1';
+    document.getElementById('pax-minus').disabled = true;
+    document.getElementById('pax-plus').disabled = false;
+    updateSubmit(); updateStatus();
+
+    /* Отправляем на сервер */
+    backendCall({
+      action: 'add',
+      tripDate: currentTripKey,
+      dayName: trip ? trip.dayName + ' ' + trip.dateStr : '',
+      room: room,
+      guests: p
+    })
+    .then(function(res) {
+      if (res && res.ok) {
+        showToast('Комната ' + room + ' — ' + p + ' чел. Записано!', 'green');
+      } else {
+        /* Откат при ошибке сервера */
+        delete regs[currentTripKey][room];
+        buildRooms(); updateStatus();
+        showToast('Не удалось сохранить. Попробуйте ещё раз.', 'red');
+      }
+    })
+    .catch(function() {
+      delete regs[currentTripKey][room];
+      buildRooms(); updateStatus();
+      showToast('Нет связи с сервером. Попробуйте ещё раз.', 'red');
+    });
+  }
+
+  /* ── Модальное окно отмены ── */
+  function openCancelModal(roomN) {
+    pendingCancelRoom = roomN;
+    document.getElementById('modal-sub').textContent =
+      'Введите номер комнаты «' + roomN + '» чтобы подтвердить отмену';
+    document.getElementById('modal-input').value = '';
+    document.getElementById('modal-error').textContent = '';
+    document.getElementById('modal-input').classList.remove('error');
+    document.getElementById('modal-overlay').classList.add('open');
+    setTimeout(function() { document.getElementById('modal-input').focus(); }, 100);
+  }
+
+  function closeModal(e) {
+    if (e && e.target !== document.getElementById('modal-overlay')) return;
+    document.getElementById('modal-overlay').classList.remove('open');
+    pendingCancelRoom = null;
+  }
+
+  function clearError() {
+    document.getElementById('modal-error').textContent = '';
+    document.getElementById('modal-input').classList.remove('error');
+  }
+
+  function confirmCancel() {
+    var input = document.getElementById('modal-input').value.trim();
+    if (input !== pendingCancelRoom) {
+      document.getElementById('modal-error').textContent = 'Номер не совпадает. Попробуйте ещё раз.';
+      var inp = document.getElementById('modal-input');
+      inp.classList.add('error');
+      setTimeout(function() { inp.classList.remove('error'); }, 400);
+      return;
+    }
+    var room = pendingCancelRoom;
+    var tripKey = currentTripKey;
+    /* Оптимистично обновляем UI */
+    delete regs[tripKey][room];
+    document.getElementById('modal-overlay').classList.remove('open');
+    pendingCancelRoom = null;
+    buildRooms(); updateStatus();
+
+    /* Отправляем на сервер */
+    backendCall({ action: 'cancel', tripDate: tripKey, room: room })
+      .then(function(res) {
+        if (res && res.ok) {
+          showToast('Комната ' + room + ' — запись отменена', 'red');
+        } else {
+          showToast('Не удалось отменить. Обновите приложение.', 'red');
+        }
+      })
+      .catch(function() {
+        showToast('Нет связи с сервером.', 'red');
+      });
+  }
+
+  /* ── Список ── */
+  function updateStatus() {
+    var data = regs[currentTripKey] || {};
+    var keys = Object.keys(data).sort();
+    var rows = document.getElementById('status-rows');
+    var trip = TRIPS.find(function(t) { return t.key === currentTripKey; });
+    document.getElementById('status-title').textContent =
+      'Список — ' + (trip ? trip.dayName + ' ' + trip.dateStr : '');
+
+    if (keys.length === 0) {
+      rows.innerHTML = '<div class="status-empty">Никто ещё не записался</div>';
+      document.getElementById('total-val').textContent = '0 чел.';
+      return;
+    }
+    rows.innerHTML = keys.map(function(r) {
+      return '<div class="status-row">' +
+        '<span class="status-room">Комната ' + r + '</span>' +
+        '<div class="status-right">' +
+          '<span class="status-pax">' + data[r] + ' чел.</span>' +
+          '<button class="cancel-btn" onclick="openCancelModal(\'' + r + '\')" title="Отменить запись">' +
+            '<svg width="14" height="14" style="color:var(--red)"><use href="#ico-trash"/></svg>' +
+          '</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    var total = keys.reduce(function(s, r) { return s + data[r]; }, 0);
+    document.getElementById('total-val').textContent = total + ' чел.';
+  }
+
+  function selectTrip(key, el) {
+    currentTripKey = key;
+    document.querySelectorAll('.trip-pill').forEach(function(p) { p.classList.remove('active'); });
+    el.classList.add('active');
+    buildRooms(); updateStatus();
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+    document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.getElementById('page-' + tab).classList.add('active');
+    document.getElementById('tab-' + tab).classList.add('active');
+    if (tab === 'status') updateStatus();
+  }
+
+  function showToast(msg, color) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + (color || 'green');
+    t.classList.add('show');
+    setTimeout(function() { t.classList.remove('show'); }, 3000);
+  }
+
+  /* Enter в поле ввода = подтвердить */
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && document.getElementById('modal-overlay').classList.contains('open')) {
+      confirmCancel();
+    }
+    if (e.key === 'Escape' && document.getElementById('modal-overlay').classList.contains('open')) {
+      document.getElementById('modal-overlay').classList.remove('open');
+    }
+  });
+
+  buildTripPills();
+  buildRooms();
+  updateStatus();
+
+  /* Загрузка существующих записей из Google Sheets при открытии */
+  loadAllRegistrations().then(function() {
+    buildRooms();
+    updateStatus();
+  });
+</script>
+</body>
+</html>
