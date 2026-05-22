@@ -477,6 +477,32 @@
 
   var MONTHS_RU = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
 
+  /* ── Google Sheets backend ── */
+  var BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyQFqebZqdld22w1_oAM-RcYjY15JUwBV0cMrEfEGsUyc9BSaR809rSdwrBqxXmKG0z/exec';
+
+  function backendCall(params) {
+    var query = Object.keys(params)
+      .map(function(k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
+      .join('&');
+    return fetch(BACKEND_URL + '?' + query, { method: 'GET' })
+      .then(function(r) { return r.json(); });
+  }
+
+  function loadAllRegistrations() {
+    return backendCall({ action: 'list' })
+      .then(function(res) {
+        if (res && res.ok && res.data) {
+          /* Сливаем серверные данные с локальной структурой */
+          TRIPS.forEach(function(t) { regs[t.key] = res.data[t.key] || {}; });
+        }
+      })
+      .catch(function(err) {
+        console.error('Ошибка загрузки:', err);
+        showToast('Не удалось загрузить данные. Проверьте интернет.', 'red');
+      });
+  }
+
+
   function generateTrips() {
     var trips = [];
     var today = new Date(); today.setHours(0,0,0,0);
@@ -576,16 +602,44 @@
 
   function doRegister() {
     if (!selectedRoom) return;
-    regs[currentTripKey][selectedRoom] = pax;
+    var room = selectedRoom;
+    var p    = pax;
+    var trip = TRIPS.find(function(t) { return t.key === currentTripKey; });
+
+    /* Сразу обновляем UI — оптимистично */
+    regs[currentTripKey][room] = p;
     document.querySelectorAll('.room-btn').forEach(function(b) {
-      if (b.dataset.n === selectedRoom) { b.classList.remove('selected'); b.classList.add('taken'); }
+      if (b.dataset.n === room) { b.classList.remove('selected'); b.classList.add('taken'); }
     });
-    showToast('Комната ' + selectedRoom + ' — ' + pax + ' чел. Записано!', 'green');
     selectedRoom = null; pax = 1;
     document.getElementById('pax-val').textContent = '1';
     document.getElementById('pax-minus').disabled = true;
     document.getElementById('pax-plus').disabled = false;
     updateSubmit(); updateStatus();
+
+    /* Отправляем на сервер */
+    backendCall({
+      action: 'add',
+      tripDate: currentTripKey,
+      dayName: trip ? trip.dayName + ' ' + trip.dateStr : '',
+      room: room,
+      guests: p
+    })
+    .then(function(res) {
+      if (res && res.ok) {
+        showToast('Комната ' + room + ' — ' + p + ' чел. Записано!', 'green');
+      } else {
+        /* Откат при ошибке сервера */
+        delete regs[currentTripKey][room];
+        buildRooms(); updateStatus();
+        showToast('Не удалось сохранить. Попробуйте ещё раз.', 'red');
+      }
+    })
+    .catch(function() {
+      delete regs[currentTripKey][room];
+      buildRooms(); updateStatus();
+      showToast('Нет связи с сервером. Попробуйте ещё раз.', 'red');
+    });
   }
 
   /* ── Модальное окно отмены ── */
@@ -620,11 +674,26 @@
       setTimeout(function() { inp.classList.remove('error'); }, 400);
       return;
     }
-    delete regs[currentTripKey][pendingCancelRoom];
+    var room = pendingCancelRoom;
+    var tripKey = currentTripKey;
+    /* Оптимистично обновляем UI */
+    delete regs[tripKey][room];
     document.getElementById('modal-overlay').classList.remove('open');
-    showToast('Комната ' + pendingCancelRoom + ' — запись отменена', 'red');
     pendingCancelRoom = null;
     buildRooms(); updateStatus();
+
+    /* Отправляем на сервер */
+    backendCall({ action: 'cancel', tripDate: tripKey, room: room })
+      .then(function(res) {
+        if (res && res.ok) {
+          showToast('Комната ' + room + ' — запись отменена', 'red');
+        } else {
+          showToast('Не удалось отменить. Обновите приложение.', 'red');
+        }
+      })
+      .catch(function() {
+        showToast('Нет связи с сервером.', 'red');
+      });
   }
 
   /* ── Список ── */
@@ -692,6 +761,12 @@
   buildTripPills();
   buildRooms();
   updateStatus();
+
+  /* Загрузка существующих записей из Google Sheets при открытии */
+  loadAllRegistrations().then(function() {
+    buildRooms();
+    updateStatus();
+  });
 </script>
 </body>
 </html>
